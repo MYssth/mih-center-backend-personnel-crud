@@ -23,7 +23,7 @@ async function deleteRole(personnel_id) {
 async function addPersonnel(personnel) {
     try {
 
-        console.log("addPersonnel call try to connect server id = "+personnel.personnel_id);
+        console.log("addPersonnel call try to connect server id = " + personnel.personnel_id);
         let pool = await sql.connect(config);
         console.log("connect complete");
 
@@ -46,18 +46,19 @@ async function addPersonnel(personnel) {
         console.log("add role complete");
         console.log("add complete");
         console.log("====================");
-        return { status: "ok" };
+        return { "status": "ok" };
 
     }
     catch (error) {
         console.error(error);
+        return { "status": "error", "message": error.message };
     }
 }
 
 async function updatePersonnel(personnel) {
     try {
 
-        console.log("updatepersonnel call try to connect server id = "+personnel.personnel_id);
+        console.log("updatepersonnel call try to connect server id = " + personnel.personnel_id);
         let pool = await sql.connect(config);
         console.log("connect complete");
         let hash_secret = personnel.personnel_secret;
@@ -67,7 +68,7 @@ async function updatePersonnel(personnel) {
         }
         console.log("secret = " + personnel.personnel_secret);
         console.log("hash = " + hash_secret);
-        console.log("update personnel id = "+personnel.personnel_id);
+        console.log("update personnel id = " + personnel.personnel_id);
         await pool.request()
             .input('personnel_id', sql.VarChar, personnel.personnel_id)
             .input('personnel_secret', sql.VarChar, hash_secret)
@@ -84,14 +85,15 @@ async function updatePersonnel(personnel) {
         console.log("update personnel complete");
         console.log("update role to role list");
         deleteRole(personnel.personnel_id);
-        addRole(personnel.personnel_id,personnel.role_id);
+        addRole(personnel.personnel_id, personnel.role_id);
         console.log("update role complete");
         console.log("update complete");
         console.log("====================");
-        return { status: "ok" };
+        return { "status": "ok" };
     }
-    catch (err) {
-        console.error(err);
+    catch (error) {
+        console.error(error);
+        return { "status": "error", "message": error.message };
     }
 }
 
@@ -104,11 +106,33 @@ async function deletePersonnel(personnel_id) {
         await pool.request().input('personnel_id', sql.VarChar, personnel_id).query("DELETE FROM personnel WHERE personnel_id = @personnel_id");
         deleteRole(personnel_id);
         console.log("delete complete");
-        return { status: "ok" };
+        console.log("====================");
+        return { "status": "ok" };
 
     }
-    catch (err) {
+    catch (eror) {
+        console.error(error);
+        return { "status": "error", "message": error.message };
+    }
+}
 
+async function setPersonnelActivate(personnel_id, personnel_isactive) {
+    try {
+
+        console.log("setPersonnelActivate call try to connect server id = " + personnel_id);
+        let pool = await sql.connect(config);
+        console.log("connect complete");
+        await pool.request().input('personnel_id', sql.VarChar, personnel_id)
+            .input('personnel_isactive', sql.Bit, personnel_isactive)
+            .query("UPDATE personnel SET personnel_isactive = @personnel_isactive WHERE personnel_id = @personnel_id");
+        console.log("update complete");
+        console.log("====================");
+        return { "status": "ok" }
+
+    }
+    catch (error) {
+        console.error(error);
+        return { "status": "error", "message": error.message };
     }
 }
 
@@ -116,4 +140,5 @@ module.exports = {
     addPersonnel: addPersonnel,
     updatePersonnel: updatePersonnel,
     deletePersonnel: deletePersonnel,
+    setPersonnelActivate: setPersonnelActivate,
 }

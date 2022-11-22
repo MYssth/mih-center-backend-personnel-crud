@@ -57,6 +57,17 @@ router.route('/deletepersonnel/:id').post((request, response) => {
 
 });
 
+router.route('/setpersonnelactivate/:id/:isactive').post((request, response) => {
+
+    dboperations.setPersonnelActivate(request.params.id, request.params.isactive).then(result => {
+        response.status(200).json(result);
+    }).catch(err => {
+        console.error(err);
+        response.sendStatus(500);
+    });
+
+});
+
 var port = process.env.PORT;
 app.listen(port);
 console.log('user-crud API is running at ' + port);
