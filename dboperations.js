@@ -3,21 +3,21 @@ var config = require('./dbconfig');
 const sql = require('mssql');
 const bcrypt = require('bcrypt');
 
-async function addRole(personnel_id, role_id) {
+async function addPersonnelLevel(personnel_id, level_id) {
     let pool = await sql.connect(config);
-    var queryText = "INSERT INTO personnel_role_list (personnel_id, role_id) VALUES ";
-    for (let i = 0; i < role_id.length; i++) {
-        queryText += "('" + personnel_id + "', '" + role_id[i] + "') ";
-        if (i < role_id.length - 1) {
+    var queryText = "INSERT INTO personnel_level_list (personnel_id, level_id) VALUES ";
+    for (let i = 0; i < level_id.length; i++) {
+        queryText += "('" + personnel_id + "', '" + level_id[i] + "') ";
+        if (i < level_id.length - 1) {
             queryText += ",";
         }
     }
     await pool.request().query(queryText);
 }
 
-async function deleteRole(personnel_id) {
+async function deletePersonnelLevel(personnel_id) {
     let pool = await sql.connect(config);
-    await pool.request().input('personnel_id', sql.VarChar, personnel_id).query("DELETE FROM personnel_role_list WHERE personnel_id = @personnel_id")
+    await pool.request().input('personnel_id', sql.VarChar, personnel_id).query("DELETE FROM personnel_level_list WHERE personnel_id = @personnel_id")
 }
 
 async function addPersonnel(personnel) {
@@ -83,10 +83,10 @@ async function updatePersonnel(personnel) {
                 "position_id = @position_id " +
                 "WHERE personnel_id = @personnel_id");
         console.log("update personnel complete");
-        console.log("update role to role list");
-        deleteRole(personnel.personnel_id);
-        addRole(personnel.personnel_id, personnel.role_id);
-        console.log("update role complete");
+        console.log("update level to level list");
+        deletePersonnelLevel(personnel.personnel_id);
+        addPersonnelLevel(personnel.personnel_id, personnel.role_id);
+        console.log("update level complete");
         console.log("update complete");
         console.log("====================");
         return { "status": "ok" };
@@ -104,7 +104,7 @@ async function deletePersonnel(personnel_id) {
         let pool = await sql.connect(config);
         console.log("connect complete");
         await pool.request().input('personnel_id', sql.VarChar, personnel_id).query("DELETE FROM personnel WHERE personnel_id = @personnel_id");
-        deleteRole(personnel_id);
+        deletePersonnelLevel(personnel_id);
         console.log("delete complete");
         console.log("====================");
         return { "status": "ok" };
