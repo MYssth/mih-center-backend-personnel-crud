@@ -41,9 +41,9 @@ async function addPersonnel(personnel) {
             .query("INSERT INTO personnel (personnel_id, personnel_secret, personnel_firstname, personnel_lastname, personnel_isactive, position_id)" +
                 "VALUES (@personnel_id, @personnel_secret, @personnel_firstname, @personnel_lastname, @personnel_isactive, @position_id)");
         console.log("add personnel complete");
-        console.log("add new role to role list");
-        addRole(personnel.personnel_id, personnel.role_id);
-        console.log("add role complete");
+        console.log("add new level to level list");
+        addPersonnelLevel(personnel.personnel_id, personnel.level_list);
+        console.log("add level complete");
         console.log("add complete");
         console.log("====================");
         return { "status": "ok" };
@@ -85,7 +85,7 @@ async function updatePersonnel(personnel) {
         console.log("update personnel complete");
         console.log("update level to level list");
         deletePersonnelLevel(personnel.personnel_id);
-        addPersonnelLevel(personnel.personnel_id, personnel.role_id);
+        addPersonnelLevel(personnel.personnel_id, personnel.level_list);
         console.log("update level complete");
         console.log("update complete");
         console.log("====================");
