@@ -119,11 +119,11 @@ async function deletePersonnel(personnel_id) {
 async function setPersonnelActivate(personnel_id, personnel_isactive) {
     try {
 
-        console.log("setPersonnelActivate call try to connect server id = " + personnel_id);
+        console.log("setPersonnelActivate call try to connect server id = " + personnel_id + " status = "+personnel_isactive);
         let pool = await sql.connect(config);
         console.log("connect complete");
         await pool.request().input('personnel_id', sql.VarChar, personnel_id)
-            .input('personnel_isactive', sql.Bit, personnel_isactive)
+            .input('personnel_isactive', sql.Int, personnel_isactive)
             .query("UPDATE personnel SET personnel_isactive = @personnel_isactive WHERE personnel_id = @personnel_id");
         console.log("update complete");
         console.log("====================");
