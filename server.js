@@ -52,7 +52,7 @@ router.route('/updatepersonnel').post((request, response) => {
 
 });
 
-router.route('/deletepersonnel/:id').post((request, response) => {
+router.route('/deletepersonnel/:id').delete((request, response) => {
 
     dboperations.deletePersonnel(request.params.id).then(result => {
         response.status(200).json(result);
@@ -63,9 +63,11 @@ router.route('/deletepersonnel/:id').post((request, response) => {
 
 });
 
-router.route('/setpersonnelactivate/:id/:isactive').post((request, response) => {
+router.route('/setpersonnelactivate').post((request, response) => {
 
-    dboperations.setPersonnelActivate(request.params.id, request.params.isactive).then(result => {
+    let personnel = { ...request.body };
+
+    dboperations.setPersonnelActivate(personnel).then(result => {
         response.status(200).json(result);
     }).catch(err => {
         console.error(err);

@@ -3,6 +3,12 @@ var config = require('./dbconfig');
 const sql = require('mssql');
 const bcrypt = require('bcrypt');
 
+async function isPersonnelIdExist(personnel_id){
+    let pool = await sql.connect(config);
+    const result = await pool.request().input('personnel_id', sql.VarChar, personnel_id).query("SELECT COUNT(personnel_id) as counter FROM personnel WHERE personnel_id = @personnel_id");
+    return result.recordset[0].counter;
+}
+
 async function addPersonnelLevel(personnel_id, level_id) {
     let pool = await sql.connect(config);
     var queryText = "INSERT INTO personnel_level_list (personnel_id, level_id) VALUES ";
@@ -26,6 +32,13 @@ async function addPersonnel(personnel) {
         console.log("addPersonnel call try to connect server id = " + personnel.personnel_id);
         let pool = await sql.connect(config);
         console.log("connect complete");
+        console.log("check is personnel_id duplicate?");
+        let dupCheck = await isPersonnelIdExist(personnel.personnel_id);
+        if(dupCheck===1){
+            console.log("personnel_id is duplicate return status = duplicate to client");
+            console.log("====================");
+            return { "status": "duplicate" };
+        }
 
         const hash_secret = await bcrypt.hash(personnel.personnel_secret, parseInt(process.env.saltRounds));
         console.log("secret = " + personnel.personnel_secret);
@@ -36,14 +49,16 @@ async function addPersonnel(personnel) {
             .input('personnel_secret', sql.VarChar, hash_secret)
             .input('personnel_firstname', sql.VarChar, personnel.personnel_firstname)
             .input('personnel_lastname', sql.VarChar, personnel.personnel_lastname)
-            .input('personnel_isactive', sql.Bit, 1)
+            .input('personnel_isactive', sql.Int, 1)
             .input('position_id', sql.Int, personnel.position_id)
             .query("INSERT INTO personnel (personnel_id, personnel_secret, personnel_firstname, personnel_lastname, personnel_isactive, position_id)" +
                 "VALUES (@personnel_id, @personnel_secret, @personnel_firstname, @personnel_lastname, @personnel_isactive, @position_id)");
         console.log("add personnel complete");
-        console.log("add new level to level list");
-        addPersonnelLevel(personnel.personnel_id, personnel.level_list);
-        console.log("add level complete");
+        if (personnel.level_list.length > 0) {
+            console.log("add new level to level list");
+            addPersonnelLevel(personnel.personnel_id, personnel.level_list);
+            console.log("add level complete");
+        }
         console.log("add complete");
         console.log("====================");
         return { "status": "ok" };
@@ -74,7 +89,7 @@ async function updatePersonnel(personnel) {
             .input('personnel_secret', sql.VarChar, hash_secret)
             .input('personnel_firstname', sql.VarChar, personnel.personnel_firstname)
             .input('personnel_lastname', sql.VarChar, personnel.personnel_lastname)
-            .input('personnel_isactive', sql.Bit, personnel.personnel_isactive)
+            .input('personnel_isactive', sql.Int, personnel.personnel_isactive)
             .input('position_id', sql.Int, personnel.position_id)
             .query("UPDATE personnel SET personnel_secret = @personnel_secret, " +
                 "personnel_firstname = @personnel_firstname, " +
@@ -116,14 +131,14 @@ async function deletePersonnel(personnel_id) {
     }
 }
 
-async function setPersonnelActivate(personnel_id, personnel_isactive) {
+async function setPersonnelActivate(personnel) {
     try {
 
-        console.log("setPersonnelActivate call try to connect server id = " + personnel_id + " status = "+personnel_isactive);
+        console.log("setPersonnelActivate call try to connect server id = " + personnel.personnel_id + " status = " + personnel.personnel_isactive);
         let pool = await sql.connect(config);
         console.log("connect complete");
-        await pool.request().input('personnel_id', sql.VarChar, personnel_id)
-            .input('personnel_isactive', sql.Int, personnel_isactive)
+        await pool.request().input('personnel_id', sql.VarChar, personnel.personnel_id)
+            .input('personnel_isactive', sql.Int, personnel.personnel_isactive)
             .query("UPDATE personnel SET personnel_isactive = @personnel_isactive WHERE personnel_id = @personnel_id");
         console.log("update complete");
         console.log("====================");
