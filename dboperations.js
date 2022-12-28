@@ -3,17 +3,17 @@ var config = require('./dbconfig');
 const sql = require('mssql');
 const bcrypt = require('bcrypt');
 
-async function isPersonnelIdExist(personnel_id){
+async function isPersonnelIdExist(personnel_id) {
     let pool = await sql.connect(config);
     const result = await pool.request().input('personnel_id', sql.VarChar, personnel_id).query("SELECT COUNT(personnel_id) as counter FROM personnel WHERE personnel_id = @personnel_id");
     return result.recordset[0].counter;
 }
 
-async function addPersonnelLevel(personnel_id, level_id) {
+async function addPersonnelLevel(personnel_id, level_id, view_id) {
     let pool = await sql.connect(config);
-    var queryText = "INSERT INTO personnel_level_list (personnel_id, level_id) VALUES ";
+    var queryText = "INSERT INTO personnel_level_list (personnel_id, level_id, view_id) VALUES ";
     for (let i = 0; i < level_id.length; i++) {
-        queryText += "('" + personnel_id + "', '" + level_id[i] + "') ";
+        queryText += "('" + personnel_id + "', '" + level_id[i] + "', '" +view_id[i]+ "') ";
         if (i < level_id.length - 1) {
             queryText += ",";
         }
@@ -34,7 +34,7 @@ async function addPersonnel(personnel) {
         console.log("connect complete");
         console.log("check is personnel_id duplicate?");
         let dupCheck = await isPersonnelIdExist(personnel.personnel_id);
-        if(dupCheck===1){
+        if (dupCheck === 1) {
             console.log("personnel_id is duplicate return status = duplicate to client");
             console.log("====================");
             return { "status": "duplicate" };
@@ -56,7 +56,7 @@ async function addPersonnel(personnel) {
         console.log("add personnel complete");
         if (personnel.level_list.length > 0) {
             console.log("add new level to level list");
-            addPersonnelLevel(personnel.personnel_id, personnel.level_list);
+            addPersonnelLevel(personnel.personnel_id, personnel.level_list, personnel.view_list);
             console.log("add level complete");
         }
         console.log("add complete");
@@ -98,10 +98,12 @@ async function updatePersonnel(personnel) {
                 "position_id = @position_id " +
                 "WHERE personnel_id = @personnel_id");
         console.log("update personnel complete");
-        console.log("update level to level list");
-        deletePersonnelLevel(personnel.personnel_id);
-        addPersonnelLevel(personnel.personnel_id, personnel.level_list);
-        console.log("update level complete");
+        if (personnel.level_list !== "" && personnel.level_list !== null && personnel.level_list !== undefined) {
+            console.log("update level to level list");
+            deletePersonnelLevel(personnel.personnel_id);
+            addPersonnelLevel(personnel.personnel_id, personnel.level_list, personnel.view_list);
+            console.log("update level complete");
+        }
         console.log("update complete");
         console.log("====================");
         return { "status": "ok" };
