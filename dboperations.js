@@ -13,7 +13,7 @@ async function addPersonnelLevel(personnel_id, level_id, view_id) {
     let pool = await sql.connect(config);
     var queryText = "INSERT INTO personnel_level_list (personnel_id, level_id, view_id) VALUES ";
     for (let i = 0; i < level_id.length; i++) {
-        queryText += "('" + personnel_id + "', '" + level_id[i] + "', '" +view_id[i]+ "') ";
+        queryText += "('" + personnel_id + "', '" + level_id[i] + "', '" + view_id[i] + "') ";
         if (i < level_id.length - 1) {
             queryText += ",";
         }
@@ -24,6 +24,20 @@ async function addPersonnelLevel(personnel_id, level_id, view_id) {
 async function deletePersonnelLevel(personnel_id) {
     let pool = await sql.connect(config);
     await pool.request().input('personnel_id', sql.VarChar, personnel_id).query("DELETE FROM personnel_level_list WHERE personnel_id = @personnel_id")
+}
+
+async function getPositionsData() {
+    console.log("let getPositionsData");
+    const result = await fetch(`http://${process.env.prodHost}:${process.env.psnDataDistPort}/api/getpositions`)
+        .then((response) => response.json())
+        .then((data) => {
+            console.log("getPositionsData complete");
+            return data;
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+    return result;
 }
 
 async function addPersonnel(personnel) {
@@ -139,6 +153,27 @@ async function setPersonnelActivate(personnel) {
         console.log("setPersonnelActivate call try to connect server id = " + personnel.personnel_id + " status = " + personnel.personnel_isactive);
         let pool = await sql.connect(config);
         console.log("connect complete");
+
+        if (personnel.personnel_isactive == 1) {
+            console.log("personnel_id: " + personnel.personnel_id + " status request set to active");
+            console.log("check is position active?");
+            const positionsData = await getPositionsData();
+            for (let i = 0; i < positionsData.length; i++) {
+                if (positionsData[i].position_id == personnel.position_id) {
+                    if (positionsData[i].position_isactive == 0) {
+                        console.log("postion deactive detect, cannot active personnel id: " + personnel.personnel_id);
+                        console.log("update complete");
+                        console.log("====================");
+                        return { "status": "refuse", "message": "ไม่สามารถ active ได้เนื่องจากตำแหน่ง deactive อยู่" };
+                    }
+                    else{
+                        console.log("position active detect");
+                        break;
+                    }
+                }
+            }
+        }
+
         await pool.request().input('personnel_id', sql.VarChar, personnel.personnel_id)
             .input('personnel_isactive', sql.Int, personnel.personnel_isactive)
             .query("UPDATE personnel SET personnel_isactive = @personnel_isactive WHERE personnel_id = @personnel_id");
