@@ -9,6 +9,12 @@ async function isPersonnelIdExist(personnel_id) {
     return result.recordset[0].counter;
 }
 
+async function isSignatureExist(personnel_id) {
+    let pool = await sql.connect(config);
+    const result = await pool.request().input('personnel_id', sql.VarChar, personnel_id).query("SELECT COUNT(personnel_id) as counter FROM personnel_signature WHERE personnel_id = @personnel_id");
+    return result.recordset[0].counter;
+}
+
 async function addPersonnelLevel(personnel_id, level_id, view_id) {
     let pool = await sql.connect(config);
     var queryText = "INSERT INTO personnel_level_list (personnel_id, level_id, view_id) VALUES ";
@@ -73,6 +79,10 @@ async function addPersonnel(personnel) {
             addPersonnelLevel(personnel.personnel_id, personnel.level_list, personnel.view_list);
             console.log("add level complete");
         }
+        if(personnel.signature_data !== null || personnel.signature_data !== "" || personnel.signature_data !== undefined){
+            console.log("signature detect, adding signature");
+            await addSignature(personnel);
+        }
         console.log("add complete");
         console.log("====================");
         return { "status": "ok" };
@@ -118,6 +128,10 @@ async function updatePersonnel(personnel) {
             addPersonnelLevel(personnel.personnel_id, personnel.level_list, personnel.view_list);
             console.log("update level complete");
         }
+        if(personnel.signature_data !== null || personnel.signature_data !== "" || personnel.signature_data !== undefined){
+            console.log("signature detect, adding signature");
+            await addSignature(personnel);
+        }
         console.log("update complete");
         console.log("====================");
         return { "status": "ok" };
@@ -136,6 +150,7 @@ async function deletePersonnel(personnel_id) {
         console.log("connect complete");
         await pool.request().input('personnel_id', sql.VarChar, personnel_id).query("DELETE FROM personnel WHERE personnel_id = @personnel_id");
         deletePersonnelLevel(personnel_id);
+        delSignature(personnel_id);
         console.log("delete complete");
         console.log("====================");
         return { "status": "ok" };
@@ -166,7 +181,7 @@ async function setPersonnelActivate(personnel) {
                         console.log("====================");
                         return { "status": "refuse", "message": "ไม่สามารถ active ได้เนื่องจากตำแหน่ง deactive อยู่" };
                     }
-                    else{
+                    else {
                         console.log("position active detect");
                         break;
                     }
@@ -188,9 +203,53 @@ async function setPersonnelActivate(personnel) {
     }
 }
 
+async function addSignature(personnel) {
+    try {
+        console.log("addSignature call try connect to server, personnel_id = " + personnel.personnel_id);
+        let pool = await sql.connect(config);
+        console.log("connect complete");
+        console.log("check is signature exist for personnel_id = " + personnel.personnel_id);
+        let dupCheck = await isSignatureExist(personnel.personnel_id);
+        if (dupCheck > 0) {
+            console.log("signature found, delete old signature to keep new signature");
+            await delSignature(personnel.personnel_id);
+        }
+        console.log("signature check done, add new signature");
+        await pool.request().input("personnel_id", sql.VarChar, personnel.personnel_id)
+            .input("signature_data", sql.VarBinary, Buffer.from(personnel.signature_data))
+            .query("INSERT INTO personnel_signature (personnel_id, signature_data) VALUES (@personnel_id, @signature_data)");
+        console.log("addSignature complete");
+        console.log("====================");
+        return { "status": "ok" }
+    }
+    catch (error) {
+        console.error(error);
+        return { "status": "error", "message": error.message };
+    }
+}
+
+async function delSignature(personnel_id) {
+    try {
+        console.log("delSignature call try connect to server");
+        let pool = await sql.connect(config);
+        console.log("connect complete");
+        await pool.request().input("personnel_id", sql.VarChar, personnel_id)
+            .query("DELETE FROM personnel_signature WHERE personnel_id = @personnel_id");
+        console.log("delSignature complete");
+        console.log("====================");
+        return { "status": "ok" }
+    }
+    catch (error) {
+        console.error(error);
+        return { "status": "error", "message": error.message };
+    }
+}
+
 module.exports = {
     addPersonnel: addPersonnel,
     updatePersonnel: updatePersonnel,
     deletePersonnel: deletePersonnel,
     setPersonnelActivate: setPersonnelActivate,
+    addSignature: addSignature,
+    delSignature: delSignature,
 }
