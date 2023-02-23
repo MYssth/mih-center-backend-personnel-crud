@@ -128,7 +128,7 @@ async function updatePersonnel(personnel) {
             addPersonnelLevel(personnel.personnel_id, personnel.level_list, personnel.view_list);
             console.log("update level complete");
         }
-        if(personnel.signature_data !== null || personnel.signature_data !== "" || personnel.signature_data !== undefined){
+        if(personnel.signature_data !== null && personnel.signature_data !== "" && personnel.signature_data !== undefined){
             console.log("signature detect, adding signature");
             await addSignature(personnel);
         }
