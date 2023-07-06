@@ -79,7 +79,7 @@ async function addPersonnel(personnel) {
             addPersonnelLevel(personnel.personnel_id, personnel.level_list, personnel.view_list);
             console.log("add level complete");
         }
-        if(personnel.signature_data !== null || personnel.signature_data !== "" || personnel.signature_data !== undefined){
+        if (personnel.signature_data !== null || personnel.signature_data !== "" || personnel.signature_data !== undefined) {
             console.log("signature detect, adding signature");
             await addSignature(personnel);
         }
@@ -128,7 +128,7 @@ async function updatePersonnel(personnel) {
             addPersonnelLevel(personnel.personnel_id, personnel.level_list, personnel.view_list);
             console.log("update level complete");
         }
-        if(personnel.signature_data !== null && personnel.signature_data !== "" && personnel.signature_data !== undefined){
+        if (personnel.signature_data !== null && personnel.signature_data !== "" && personnel.signature_data !== undefined) {
             console.log("signature detect, adding signature");
             await addSignature(personnel);
         }
@@ -245,6 +245,23 @@ async function delSignature(personnel_id) {
     }
 }
 
+// async function addLvToAll() {
+//     try {
+//         let pool = await sql.connect(config);
+//         const qry = await pool.request().query("SELECT personnel_id FROM personnel WHERE personnel_isactive = 1");
+//         const result = qry.recordsets[0];
+//         for (let i = 0; i < result.length; i += 1) {
+//             console.log(`${i}. add ${result[i].personnel_id}`)
+//             addPersonnelLevel(result[i].personnel_id, ["CBS_USER"], []);
+//         }
+//         return { "status": "ok" }
+//     }
+//     catch (error) {
+//         console.error(error);
+//         return { "status": "error", "message": error.message };
+//     }
+// }
+
 module.exports = {
     addPersonnel: addPersonnel,
     updatePersonnel: updatePersonnel,
@@ -252,4 +269,5 @@ module.exports = {
     setPersonnelActivate: setPersonnelActivate,
     addSignature: addSignature,
     delSignature: delSignature,
+    // addLvToAll: addLvToAll,
 }
