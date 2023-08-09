@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv').config({ path: `.env.${process.env.NODE_ENV}` })
 var config = require('./dbconfig');
 const sql = require('mssql');
 const bcrypt = require('bcrypt');
@@ -34,7 +34,7 @@ async function deletePersonnelLevel(personnel_id) {
 
 async function getPositionsData() {
     console.log("let getPositionsData");
-    const result = await fetch(`http://${process.env.prodHost}:${process.env.psnDataDistPort}/api/getpositions`)
+    const result = await fetch(`http://${process.env.prodHost}:${process.env.psnDataDistPort}/api/psn/getpositions`)
         .then((response) => response.json())
         .then((data) => {
             console.log("getPositionsData complete");
